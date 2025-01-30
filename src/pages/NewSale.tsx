@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ServiceItem {
   id: string;
@@ -53,7 +56,10 @@ const staff = [
 
 const NewSale = () => {
   const [selectedItems, setSelectedItems] = useState<ServiceItem[]>([]);
-  const [currentCategory, setCurrentCategory] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerMobile, setCustomerMobile] = useState('');
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const addNewItem = () => {
     const newItem: ServiceItem = {
@@ -96,13 +102,67 @@ const NewSale = () => {
   };
 
   const calculateTotal = () => {
-    return selectedItems.reduce((sum, item) => sum + item.price + (item.tip || 0), 0);
+    return selectedItems.reduce((sum, item) => sum + Number(item.price) + (item.tip || 0), 0);
   };
 
-  const handleSubmit = () => {
-    console.log('Sale completed:', selectedItems);
-    // Here you would typically send this data to your backend
-    setSelectedItems([]);
+  const handleSubmit = async () => {
+    if (!customerName || !customerMobile || selectedItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all required fields",
+      });
+      return;
+    }
+
+    try {
+      // Create transaction
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert([{
+          customer_name: customerName,
+          customer_mobile: customerMobile,
+          total_amount: calculateTotal(),
+          total_tips: selectedItems.reduce((sum, item) => sum + (item.tip || 0), 0),
+          created_by: user?.id
+        }])
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // Create transaction items
+      const { error: itemsError } = await supabase
+        .from('transaction_items')
+        .insert(
+          selectedItems.map(item => ({
+            transaction_id: transaction.id,
+            service_id: item.service,
+            staff_id: item.staff,
+            price: item.price,
+            tip: item.tip || 0
+          }))
+        );
+
+      if (itemsError) throw itemsError;
+
+      toast({
+        title: "Success",
+        description: "Sale completed successfully!",
+      });
+
+      // Reset form
+      setSelectedItems([]);
+      setCustomerName('');
+      setCustomerMobile('');
+    } catch (error) {
+      console.error('Failed to complete sale:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to complete sale. Please try again.",
+      });
+    }
   };
 
   return (
@@ -110,6 +170,27 @@ const NewSale = () => {
       <h1 className="text-3xl font-semibold mb-8">New Sale</h1>
       
       <Card className="p-6 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Customer Name</label>
+            <Input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Enter customer name"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700">Mobile Number</label>
+            <Input
+              value={customerMobile}
+              onChange={(e) => setCustomerMobile(e.target.value)}
+              placeholder="Enter mobile number"
+              required
+            />
+          </div>
+        </div>
+
         <div className="space-y-6">
           {selectedItems.map((item, index) => (
             <div key={item.id} className="flex gap-4 items-start p-4 bg-white rounded-lg shadow-sm">
@@ -132,7 +213,7 @@ const NewSale = () => {
                   </Select>
                 </div>
 
-                <div className="col-span-2">
+                <div className="col-span-1">
                   <Select
                     value={item.service}
                     onValueChange={(value) => updateItem(index, 'service', value)}
@@ -150,6 +231,18 @@ const NewSale = () => {
                         ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="col-span-1">
+                  <Input
+                    type="number"
+                    placeholder="Price"
+                    value={item.price}
+                    onChange={(e) => updateItem(index, 'price', Number(e.target.value))}
+                    min="0"
+                    step="0.01"
+                    className="w-full"
+                  />
                 </div>
 
                 <div className="col-span-1">
@@ -177,12 +270,13 @@ const NewSale = () => {
                     value={item.tip || ''}
                     onChange={(e) => updateItem(index, 'tip', Number(e.target.value))}
                     min="0"
+                    step="0.01"
                     className="w-full"
                   />
                 </div>
 
                 <div className="col-span-1 flex items-center justify-between">
-                  <span className="font-medium">${item.price + (item.tip || 0)}</span>
+                  <span className="font-medium">${Number(item.price) + (item.tip || 0)}</span>
                   <Button
                     variant="ghost"
                     size="icon"
