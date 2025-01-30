@@ -4,20 +4,36 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/');
+      toast({
+        title: "Success",
+        description: "Successfully logged in!",
+      });
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid email or password. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,8 +71,9 @@ const Login = () => {
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg transition-all duration-300"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </Card>
