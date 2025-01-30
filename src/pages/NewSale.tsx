@@ -12,6 +12,7 @@ interface ServiceItem {
   id: string;
   category: string;
   service: string;
+  serviceId: string; // Added to store the actual UUID
   price: number;
   tip: number;
   staff: string;
@@ -66,6 +67,7 @@ const NewSale = () => {
       id: Date.now().toString(),
       category: '',
       service: '',
+      serviceId: '', // Initialize the new field
       price: 0,
       tip: 0,
       staff: '',
@@ -80,6 +82,7 @@ const NewSale = () => {
     if (field === 'category') {
       item.category = value as string;
       item.service = '';
+      item.serviceId = ''; // Reset serviceId when category changes
       item.price = 0;
     } else if (field === 'service') {
       const selectedService = services[item.category as keyof typeof services].find(
@@ -87,10 +90,13 @@ const NewSale = () => {
       );
       if (selectedService) {
         item.service = selectedService.name;
+        item.serviceId = value as string; // Store the service ID
         item.price = selectedService.price;
       }
+    } else if (field === 'price') {
+      item.price = Number(value);
     } else {
-      item[field] = value;
+      (item[field] as string | number) = value;
     }
 
     updatedItems[index] = item;
@@ -137,7 +143,7 @@ const NewSale = () => {
         .insert(
           selectedItems.map(item => ({
             transaction_id: transaction.id,
-            service_id: item.service,
+            service_id: item.serviceId, // Use the stored UUID instead of service name
             staff_id: item.staff,
             price: item.price,
             tip: item.tip || 0
@@ -215,7 +221,7 @@ const NewSale = () => {
 
                 <div className="col-span-1">
                   <Select
-                    value={item.service}
+                    value={item.serviceId} // Use serviceId for the select value
                     onValueChange={(value) => updateItem(index, 'service', value)}
                     disabled={!item.category}
                   >
