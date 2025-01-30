@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import NewSale from "./pages/NewSale";
+import Services from "./pages/Services";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,7 +24,7 @@ const App = () => (
             <Route element={<Layout />}>
               <Route path="/" element={<NewSale />} />
               <Route path="/new-sale" element={<NewSale />} />
-              {/* Add other routes here */}
+              <Route path="/services" element={<Services />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>

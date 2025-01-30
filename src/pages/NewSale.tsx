@@ -7,53 +7,34 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface ServiceItem {
   id: string;
   category: string;
   service: string;
-  serviceId: string; // Added to store the actual UUID
+  serviceId: string;
   price: number;
   tip: number;
   staff: string;
 }
 
-const categories = [
-  { id: 'massage', name: 'Massage' },
-  { id: 'facial', name: 'Facial' },
-  { id: 'nails', name: 'Nails' },
-  { id: 'hair', name: 'Hair' },
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
-const services = {
-  massage: [
-    { id: 'm1', name: 'Swedish Massage', price: 80 },
-    { id: 'm2', name: 'Deep Tissue Massage', price: 100 },
-    { id: 'm3', name: 'Hot Stone Massage', price: 120 },
-  ],
-  facial: [
-    { id: 'f1', name: 'Classic Facial', price: 70 },
-    { id: 'f2', name: 'Anti-Aging Facial', price: 90 },
-    { id: 'f3', name: 'Hydrating Facial', price: 85 },
-  ],
-  nails: [
-    { id: 'n1', name: 'Manicure', price: 35 },
-    { id: 'n2', name: 'Pedicure', price: 45 },
-    { id: 'n3', name: 'Gel Polish', price: 50 },
-  ],
-  hair: [
-    { id: 'h1', name: 'Haircut', price: 60 },
-    { id: 'h2', name: 'Color', price: 120 },
-    { id: 'h3', name: 'Highlights', price: 150 },
-  ],
-};
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string;
+}
 
-const staff = [
-  { id: 's1', name: 'Sarah Johnson' },
-  { id: 's2', name: 'Michael Chen' },
-  { id: 's3', name: 'Emma Davis' },
-  { id: 's4', name: 'James Wilson' },
-];
+interface Staff {
+  id: string;
+  full_name: string;
+}
 
 const NewSale = () => {
   const [selectedItems, setSelectedItems] = useState<ServiceItem[]>([]);
@@ -62,12 +43,49 @@ const NewSale = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Fetch categories from Supabase
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+      if (error) throw error;
+      return data as Category[];
+    }
+  });
+
+  // Fetch services from Supabase
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*');
+      if (error) throw error;
+      return data as Service[];
+    }
+  });
+
+  // Fetch staff from Supabase
+  const { data: staff = [] } = useQuery({
+    queryKey: ['staff'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('role', 'staff');
+      if (error) throw error;
+      return data as Staff[];
+    }
+  });
+
   const addNewItem = () => {
     const newItem: ServiceItem = {
       id: Date.now().toString(),
       category: '',
       service: '',
-      serviceId: '', // Initialize the new field
+      serviceId: '',
       price: 0,
       tip: 0,
       staff: '',
@@ -82,15 +100,13 @@ const NewSale = () => {
     if (field === 'category') {
       item.category = value as string;
       item.service = '';
-      item.serviceId = ''; // Reset serviceId when category changes
+      item.serviceId = '';
       item.price = 0;
     } else if (field === 'service') {
-      const selectedService = services[item.category as keyof typeof services].find(
-        (s) => s.id === value
-      );
+      const selectedService = services.find(s => s.id === value);
       if (selectedService) {
         item.service = selectedService.name;
-        item.serviceId = value as string; // Store the service ID
+        item.serviceId = selectedService.id;
         item.price = selectedService.price;
       }
     } else if (field === 'price') {
@@ -143,7 +159,7 @@ const NewSale = () => {
         .insert(
           selectedItems.map(item => ({
             transaction_id: transaction.id,
-            service_id: item.serviceId, // Use the stored UUID instead of service name
+            service_id: item.serviceId,
             staff_id: item.staff,
             price: item.price,
             tip: item.tip || 0
@@ -221,7 +237,7 @@ const NewSale = () => {
 
                 <div className="col-span-1">
                   <Select
-                    value={item.serviceId} // Use serviceId for the select value
+                    value={item.serviceId}
                     onValueChange={(value) => updateItem(index, 'service', value)}
                     disabled={!item.category}
                   >
@@ -229,8 +245,9 @@ const NewSale = () => {
                       <SelectValue placeholder="Select service" />
                     </SelectTrigger>
                     <SelectContent>
-                      {item.category &&
-                        services[item.category as keyof typeof services].map((service) => (
+                      {services
+                        .filter(service => service.category_id === item.category)
+                        .map((service) => (
                           <SelectItem key={service.id} value={service.id}>
                             {service.name} - ${service.price}
                           </SelectItem>
@@ -262,7 +279,7 @@ const NewSale = () => {
                     <SelectContent>
                       {staff.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          {s.name}
+                          {s.full_name}
                         </SelectItem>
                       ))}
                     </SelectContent>
