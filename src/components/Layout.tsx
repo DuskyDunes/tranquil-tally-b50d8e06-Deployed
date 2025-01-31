@@ -21,6 +21,7 @@ const Layout = () => {
     { icon: Home, label: 'Dashboard', path: '/dashboard' },
     { icon: DollarSign, label: 'New Sale', path: '/new-sale' },
     { icon: Calendar, label: 'Services', path: '/services' },
+    { icon: Calendar, label: 'Transactions Detail', path: '/TransactionHistory' },
     { icon: Users, label: 'Staff', path: '/staff' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
