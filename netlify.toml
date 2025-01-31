@@ -1,0 +1,13 @@
+build]
+  # The base directory (relative to the root of your repository)
+  base = ""
+  # The directory that contains the build output (relative to the root of your repository)
+  publish = "dist"
+  # Build command (e.g., for React, it’s typically "npm run build")
+  command = "npm run build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
