@@ -1,4 +1,4 @@
-build]
+[build]
   # The base directory (relative to the root of your repository)
   base = ""
   # The directory that contains the build output (relative to the root of your repository)
