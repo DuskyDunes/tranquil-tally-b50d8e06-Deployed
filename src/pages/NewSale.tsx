@@ -33,7 +33,8 @@ interface Service {
 
 interface Staff {
   id: string;
-  full_name: string;
+  full_name: string | null;
+  email: string;
 }
 
 const NewSale = () => {
