@@ -5,6 +5,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useState } from "react";
 import { startOfDay, endOfDay, format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface TransactionItem {
   id: string;
@@ -82,43 +83,45 @@ const TransactionHistory = () => {
       ) : (
         <div className="space-y-6">
           {transactions?.map((transaction) => (
-            <Card key={transaction.id} className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">{transaction.customer_name}</h3>
-                  <p className="text-sm text-gray-500">{transaction.customer_mobile}</p>
-                  <p className="text-sm text-gray-500">
-                    {format(new Date(transaction.created_at), 'PPpp')}
-                  </p>
+            <Link key={transaction.id} to={`/transactions/${transaction.id}`}>
+              <Card className="p-6 hover:shadow-lg transition-shadow duration-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">{transaction.customer_name}</h3>
+                    <p className="text-sm text-gray-500">{transaction.customer_mobile}</p>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(transaction.created_at), 'PPpp')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">${transaction.total_amount}</p>
+                    <p className="text-sm text-gray-500">Tips: ${transaction.total_tips}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold">${transaction.total_amount}</p>
-                  <p className="text-sm text-gray-500">Tips: ${transaction.total_tips}</p>
-                </div>
-              </div>
 
-              <div className="border-t pt-4">
-                <h4 className="font-medium mb-2">Services</h4>
-                <div className="space-y-2">
-                  {transaction.transaction_items?.map((item: any) => (
-                    <div key={item.id} className="flex justify-between items-center">
-                      <div>
-                        <p>{item.services?.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Staff: {item.profiles?.full_name || item.profiles?.email}
-                        </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Services</h4>
+                  <div className="space-y-2">
+                    {transaction.transaction_items?.map((item: any) => (
+                      <div key={item.id} className="flex justify-between items-center">
+                        <div>
+                          <p>{item.services?.name}</p>
+                          <p className="text-sm text-gray-500">
+                            Staff: {item.profiles?.full_name || item.profiles?.email}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p>${item.price}</p>
+                          {item.tip > 0 && (
+                            <p className="text-sm text-gray-500">Tip: ${item.tip}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p>${item.price}</p>
-                        {item.tip > 0 && (
-                          <p className="text-sm text-gray-500">Tip: ${item.tip}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

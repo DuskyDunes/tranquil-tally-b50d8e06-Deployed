@@ -13,6 +13,7 @@ import Staff from "./pages/Staff";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import TransactionHistory from "./pages/TransactionHistory";
+import TransactionDetail from "./pages/TransactionDetail";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/staff" element={<Staff />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/transactions" element={<TransactionHistory />} />
+              <Route path="/transactions/:id" element={<TransactionDetail />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
