@@ -77,12 +77,18 @@ const NewSale = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .order('full_name');
+        .eq('role', 'staff');
+
       if (error) {
         console.error('Error fetching staff:', error);
-        throw error;
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load staff members. Please try again.",
+        });
+        return [];
       }
-      return data as Staff[];
+      return data;
     }
   });
 
@@ -288,6 +294,11 @@ const NewSale = () => {
                           {s.full_name || s.email}
                         </SelectItem>
                       ))}
+                      {staff.length === 0 && (
+                        <SelectItem value="none" disabled>
+                          No staff members available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
