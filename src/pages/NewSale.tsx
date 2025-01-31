@@ -49,7 +49,8 @@ const NewSale = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('categories')
-        .select('*');
+        .select('*')
+        .order('name');
       if (error) throw error;
       return data as Category[];
     }
@@ -61,21 +62,25 @@ const NewSale = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('*');
+        .select('*')
+        .order('name');
       if (error) throw error;
       return data as Service[];
     }
   });
 
-  // Fetch staff from Supabase
+  // Updated staff query to fetch all staff profiles
   const { data: staff = [] } = useQuery({
     queryKey: ['staff'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name')
-        .eq('role', 'staff');
-      if (error) throw error;
+        .select('id, full_name, email')
+        .order('full_name');
+      if (error) {
+        console.error('Error fetching staff:', error);
+        throw error;
+      }
       return data as Staff[];
     }
   });
@@ -279,7 +284,7 @@ const NewSale = () => {
                     <SelectContent>
                       {staff.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
-                          {s.full_name}
+                          {s.full_name || s.email}
                         </SelectItem>
                       ))}
                     </SelectContent>
