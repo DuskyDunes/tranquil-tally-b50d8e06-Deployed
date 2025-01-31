@@ -6,6 +6,12 @@ import { useState } from "react";
 import { startOfDay, endOfDay } from "date-fns";
 import { Loader2 } from "lucide-react";
 
+interface StaffPerformance {
+  name: string;
+  totalTips: number;
+  serviceCount: number;
+}
+
 const Dashboard = () => {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
@@ -23,7 +29,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: staffPerformance, isLoading: isLoadingStaff } = useQuery({
+  const { data: staffPerformance, isLoading: isLoadingStaff } = useQuery<StaffPerformance[]>({
     queryKey: ['staff-performance', startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -41,7 +47,7 @@ const Dashboard = () => {
       
       if (error) throw error;
 
-      const staffStats = data.reduce((acc: any, item) => {
+      const staffStats = data.reduce((acc: Record<string, StaffPerformance>, item) => {
         const staffId = item.staff_id;
         if (!acc[staffId]) {
           acc[staffId] = {

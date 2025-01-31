@@ -6,11 +6,34 @@ import { useState } from "react";
 import { startOfDay, endOfDay, format } from "date-fns";
 import { Loader2 } from "lucide-react";
 
+interface TransactionItem {
+  id: string;
+  price: number;
+  tip: number;
+  services: {
+    name: string;
+  };
+  profiles: {
+    full_name: string | null;
+    email: string | null;
+  };
+}
+
+interface Transaction {
+  id: string;
+  customer_name: string;
+  customer_mobile: string;
+  total_amount: number;
+  total_tips: number;
+  created_at: string;
+  transaction_items: TransactionItem[];
+}
+
 const TransactionHistory = () => {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
 
-  const { data: transactions, isLoading } = useQuery({
+  const { data: transactions, isLoading } = useQuery<Transaction[]>({
     queryKey: ['transactions-history', startDate, endDate],
     queryFn: async () => {
       const { data, error } = await supabase
